@@ -1,0 +1,71 @@
+import 'package:flutter/material.dart';
+
+class SideMenu extends StatelessWidget {
+  const SideMenu({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade900,
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(
+                  Icons.content_cut,
+                  color: Colors.white,
+                  size: 48,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Barbería',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.home),
+            title: const Text('Inicio'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.shopping_cart),
+            title: const Text('Ventas'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/ventas');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.calendar_today),
+            title: const Text('Agendamiento'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/agendamiento');
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              // Assuming you handle logout logic here or navigate to login
+              Navigator.pushReplacementNamed(context, '/');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
