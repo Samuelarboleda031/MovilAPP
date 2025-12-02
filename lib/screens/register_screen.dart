@@ -64,6 +64,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Future<void> _googleRegister() async {
+    setState(() => _loading = true);
+    try {
+      final user = await _auth.signInWithGoogle();
+      if (user != null && mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } on FirebaseAuthException catch (e) {
+      _showMessage(e.message ?? 'Error en registro con Google');
+    } catch (e) {
+      _showMessage('Error inesperado con Google');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,6 +101,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: ElevatedButton(
                 onPressed: _loading ? null : _register,
                 child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Registrarse'),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _loading ? null : _googleRegister,
+                icon: const Icon(Icons.g_mobiledata, size: 24),
+                label: const Text('Registrarse con Google'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
           ],

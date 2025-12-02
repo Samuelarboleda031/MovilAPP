@@ -13,15 +13,6 @@ class HomeScreen extends StatelessWidget {
       drawer: const SideMenu(),
       appBar: AppBar(
         title: const Text('Home'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await auth.signOut();
-              if (context.mounted) Navigator.pushReplacementNamed(context, '/');
-            },
-          )
-        ],
       ),
       body: Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [

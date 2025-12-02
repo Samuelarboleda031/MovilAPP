@@ -494,7 +494,7 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                     ElevatedButton(
                       onPressed: _isLoading ? null : _guardarAgendamiento,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.brown.shade800,
+                        backgroundColor: const Color(0xFFD8B081),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),

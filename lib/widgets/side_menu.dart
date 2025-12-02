@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class SideMenu extends StatelessWidget {
   const SideMenu({super.key});
@@ -59,9 +60,12 @@ class SideMenu extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
-            onTap: () {
-              // Assuming you handle logout logic here or navigate to login
-              Navigator.pushReplacementNamed(context, '/');
+            onTap: () async {
+              final auth = AuthService();
+              await auth.signOut();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/');
+              }
             },
           ),
         ],

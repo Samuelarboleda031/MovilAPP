@@ -1,15 +1,36 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/usuario.dart';
 
 class AuthService {
   static const String _userKey = 'user_data';
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Inicia sesión con correo y contraseña
   Future<UserCredential> signIn(String email, String password) async {
     return await _auth.signInWithEmailAndPassword(email: email, password: password);
+  }
+
+  // Inicia sesión con Google
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null; // El usuario canceló el inicio de sesión
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      return await _auth.signInWithCredential(credential);
+    } catch (e) {
+      print('Error en Google Sign-In: $e');
+      rethrow;
+    }
   }
 
   // Registra un nuevo usuario
@@ -41,6 +62,12 @@ class AuthService {
   Future<void> signOut() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userKey);
+    try {
+      await _googleSignIn.disconnect();
+    } catch (_) {
+      // Ignorar error si no estaba conectado con Google
+    }
+    await _googleSignIn.signOut();
     await _auth.signOut();
   }
 

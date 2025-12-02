@@ -523,7 +523,7 @@ class _AgendamientosScreenState extends State<AgendamientosScreen> {
             ),
           ).then((_) => _cargarAgendamientos());
         },
-        backgroundColor: Colors.brown.shade800,
+        backgroundColor: const Color(0xFFD8B081),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

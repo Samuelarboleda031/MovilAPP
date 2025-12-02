@@ -453,7 +453,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                         IconButton(
                           icon: const Icon(Icons.add),
                           onPressed: _agregarDetalle,
-                          color: Colors.brown.shade800,
+                          color: const Color(0xFFD8B081),
                         ),
                       ],
                     ),
@@ -515,7 +515,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                     ElevatedButton(
                       onPressed: _isLoading || _isLoadingData ? null : _guardarVenta,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.brown.shade800,
+                        backgroundColor: const Color(0xFFD8B081),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -534,30 +534,89 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
   }
 
   Widget _buildDetalleItem(int index, DetalleVentaItem detalle) {
-    
-    // Función auxiliar para obtener el precio
-    double getPrice(ItemVenta item) {
-      switch (item.tipo) {
-        case 'Producto':
-          final prod = _productos.firstWhere(
-              (p) => p.id == item.id,
-              orElse: () => Producto(id: -1, nombre: '', categoriaId: 0, proveedorId: 0, precioCompra: 0, precioVenta: 0));
-          return prod.id != -1 ? prod.precioVenta : 0.0;
-        case 'Servicio':
-          final serv = _servicios.firstWhere(
-              (s) => s.id == item.id,
-              orElse: () => Servicio(id: -1, nombre: '', precio: 0, duracionMinutos: 0));
-          return serv.id != -1 ? serv.precio : 0.0;
-        case 'Paquete':
-          final paq = _paquetes.firstWhere(
-              (p) => p.id == item.id,
-              orElse: () => Paquete(id: -1, nombre: '', precio: 0, duracionMinutos: 0));
-          return paq.id != -1 ? paq.precio : 0.0;
-        default:
-          return 0.0;
-      }
-    }
+    return DetalleVentaRow(
+      key: ValueKey(detalle), // Important: Use a key to maintain state correctly
+      index: index,
+      detalle: detalle,
+      productos: _productos,
+      servicios: _servicios,
+      paquetes: _paquetes,
+      onRemove: () => _eliminarDetalle(index),
+      onChanged: () {
+        setState(() {
+          // Trigger rebuild to update totals
+        });
+      },
+    );
+  }
+}
 
+class DetalleVentaRow extends StatefulWidget {
+  final int index;
+  final DetalleVentaItem detalle;
+  final List<Producto> productos;
+  final List<Servicio> servicios;
+  final List<Paquete> paquetes;
+  final VoidCallback onRemove;
+  final VoidCallback onChanged;
+
+  const DetalleVentaRow({
+    super.key,
+    required this.index,
+    required this.detalle,
+    required this.productos,
+    required this.servicios,
+    required this.paquetes,
+    required this.onRemove,
+    required this.onChanged,
+  });
+
+  @override
+  State<DetalleVentaRow> createState() => _DetalleVentaRowState();
+}
+
+class _DetalleVentaRowState extends State<DetalleVentaRow> {
+  late TextEditingController _cantidadCtrl;
+  late TextEditingController _precioCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _cantidadCtrl = TextEditingController(text: widget.detalle.cantidad.toString());
+    _precioCtrl = TextEditingController(text: widget.detalle.precioUnitario.toStringAsFixed(2));
+  }
+
+  @override
+  void dispose() {
+    _cantidadCtrl.dispose();
+    _precioCtrl.dispose();
+    super.dispose();
+  }
+
+  double getPrice(ItemVenta item) {
+    switch (item.tipo) {
+      case 'Producto':
+        final prod = widget.productos.firstWhere(
+            (p) => p.id == item.id,
+            orElse: () => Producto(id: -1, nombre: '', categoriaId: 0, proveedorId: 0, precioCompra: 0, precioVenta: 0));
+        return prod.id != -1 ? prod.precioVenta : 0.0;
+      case 'Servicio':
+        final serv = widget.servicios.firstWhere(
+            (s) => s.id == item.id,
+            orElse: () => Servicio(id: -1, nombre: '', precio: 0, duracionMinutos: 0));
+        return serv.id != -1 ? serv.precio : 0.0;
+      case 'Paquete':
+        final paq = widget.paquetes.firstWhere(
+            (p) => p.id == item.id,
+            orElse: () => Paquete(id: -1, nombre: '', precio: 0, duracionMinutos: 0));
+        return paq.id != -1 ? paq.precio : 0.0;
+      default:
+        return 0.0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -568,7 +627,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<ItemVenta?>(
-                    value: detalle.itemSeleccionado,
+                    value: widget.detalle.itemSeleccionado,
                     isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Producto/Servicio/Paquete *',
@@ -576,16 +635,15 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                       isDense: true,
                     ),
                     items: [
-                      // Usar ItemVenta para crear valores únicos
-                      ..._productos.map((p) => DropdownMenuItem<ItemVenta>(
+                      ...widget.productos.map((p) => DropdownMenuItem<ItemVenta>(
                             value: ItemVenta(tipo: 'Producto', id: p.id!),
                             child: Text('Producto: ${p.nombre}'),
                           )),
-                      ..._servicios.map((s) => DropdownMenuItem<ItemVenta>(
+                      ...widget.servicios.map((s) => DropdownMenuItem<ItemVenta>(
                             value: ItemVenta(tipo: 'Servicio', id: s.id!),
                             child: Text('Servicio: ${s.nombre}'),
                           )),
-                      ..._paquetes.map((paq) => DropdownMenuItem<ItemVenta>(
+                      ...widget.paquetes.map((paq) => DropdownMenuItem<ItemVenta>(
                             value: ItemVenta(tipo: 'Paquete', id: paq.id!),
                             child: Text('Paquete: ${paq.nombre}'),
                           )),
@@ -593,25 +651,30 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                     onChanged: (ItemVenta? newValue) {
                       if (newValue == null) return;
                       setState(() {
-                        detalle.itemSeleccionado = newValue;
+                        widget.detalle.itemSeleccionado = newValue;
 
                         // Limpiar y asignar el ID correcto
-                        detalle.productoId = null;
-                        detalle.servicioId = null;
-                        detalle.paqueteId = null;
+                        widget.detalle.productoId = null;
+                        widget.detalle.servicioId = null;
+                        widget.detalle.paqueteId = null;
                         
                         switch (newValue.tipo) {
                           case 'Producto':
-                            detalle.productoId = newValue.id;
+                            widget.detalle.productoId = newValue.id;
                             break;
                           case 'Servicio':
-                            detalle.servicioId = newValue.id;
+                            widget.detalle.servicioId = newValue.id;
                             break;
                           case 'Paquete':
-                            detalle.paqueteId = newValue.id;
+                            widget.detalle.paqueteId = newValue.id;
                             break;
                         }
-                        detalle.precioUnitario = getPrice(newValue);
+                        
+                        final newPrice = getPrice(newValue);
+                        widget.detalle.precioUnitario = newPrice;
+                        _precioCtrl.text = newPrice.toStringAsFixed(2);
+                        
+                        widget.onChanged();
                       });
                     },
                     validator: (value) {
@@ -624,7 +687,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _eliminarDetalle(index),
+                  onPressed: widget.onRemove,
                 ),
               ],
             ),
@@ -633,7 +696,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
               children: [
                 Expanded(
                   child: TextFormField(
-                    initialValue: detalle.cantidad.toString(),
+                    controller: _cantidadCtrl,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: 'Cantidad',
@@ -647,15 +710,18 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                       return null;
                     },
                     onChanged: (value) {
-                      detalle.cantidad = int.tryParse(value) ?? detalle.cantidad; 
-                      setState(() {});
+                      final cant = int.tryParse(value);
+                      if (cant != null) {
+                        widget.detalle.cantidad = cant;
+                        widget.onChanged();
+                      }
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextFormField(
-                    initialValue: detalle.precioUnitario.toStringAsFixed(2),
+                    controller: _precioCtrl,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: 'Precio Unitario',
@@ -669,21 +735,23 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                       return null;
                     },
                     onChanged: (value) {
-                      detalle.precioUnitario = double.tryParse(value) ?? 0.0;
-                      setState(() {});
+                      final price = double.tryParse(value);
+                      if (price != null) {
+                        widget.detalle.precioUnitario = price;
+                        widget.onChanged();
+                      }
                     },
                   ),
                 ),
               ],
             ),
-            // Muestra el subtotal del detalle
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    'Subtotal Detalle: \$${(detalle.cantidad * detalle.precioUnitario).toStringAsFixed(2)}',
+                    'Subtotal Detalle: \$${(widget.detalle.cantidad * widget.detalle.precioUnitario).toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],

@@ -565,7 +565,7 @@ class _VentasScreenState extends State<VentasScreen> {
             ),
           ).then((_) => _cargarVentas());
         },
-        backgroundColor: Colors.brown.shade800,
+        backgroundColor: const Color(0xFFD8B081),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

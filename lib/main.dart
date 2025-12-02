@@ -5,6 +5,7 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/ventas_screen.dart';
 import 'screens/agendamientos_screen.dart';
+import 'screens/client_home_screen.dart';
 import 'firebase_options.dart';
 
 void main() async{
@@ -50,7 +51,7 @@ class MyApp extends StatelessWidget {
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.brown.shade800,
+            backgroundColor: const Color(0xFFD8B081),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
@@ -89,6 +90,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/ventas': (context) => const VentasScreen(),
         '/agendamiento': (context) => const AgendamientosScreen(),
+        '/client_home': (context) => const ClientHomeScreen(),
       },
     );
   }
