@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../widgets/side_menu.dart';
 
 class ClientHomeScreen extends StatelessWidget {
   const ClientHomeScreen({super.key});
@@ -10,17 +11,9 @@ class ClientHomeScreen extends StatelessWidget {
     final user = auth.currentUser;
 
     return Scaffold(
+      drawer: const SideMenu(isClient: true),
       appBar: AppBar(
         title: const Text('Mi Cuenta'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await auth.signOut();
-              if (context.mounted) Navigator.pushReplacementNamed(context, '/');
-            },
-          )
-        ],
       ),
       body: Center(
         child: Column(
@@ -38,26 +31,16 @@ class ClientHomeScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Implementar agendamiento para cliente
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Próximamente: Agendar Cita')),
-                );
-              },
-              icon: const Icon(Icons.calendar_today),
-              label: const Text('Agendar Cita'),
+            const Text(
+              'Módulo de agendamiento deshabilitado',
+              style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () {
-                // TODO: Implementar historial de citas
-                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Próximamente: Mis Citas')),
-                );
-              },
-              icon: const Icon(Icons.history),
-              label: const Text('Mis Citas'),
+            const Text(
+              'El sistema de citas no está disponible actualmente.',
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

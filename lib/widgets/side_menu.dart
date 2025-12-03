@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
 class SideMenu extends StatelessWidget {
-  const SideMenu({super.key});
+  final bool isClient;
+
+  const SideMenu({super.key, this.isClient = false});
 
   @override
   Widget build(BuildContext context) {
@@ -39,23 +41,44 @@ class SideMenu extends StatelessWidget {
             leading: const Icon(Icons.home),
             title: const Text('Inicio'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/home');
+              Navigator.pushReplacementNamed(
+                  context, isClient ? '/client_home' : '/home');
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.shopping_cart),
-            title: const Text('Ventas'),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/ventas');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title: const Text('Agendamiento'),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/agendamiento');
-            },
-          ),
+          if (!isClient) ...[
+            ListTile(
+              leading: const Icon(Icons.shopping_cart),
+              title: const Text('Ventas'),
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/ventas');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.calendar_today),
+              title: const Text('Agendamiento'),
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/agendamiento');
+              },
+            ),
+          ],
+          if (isClient) ...[
+            ListTile(
+              leading: const Icon(Icons.calendar_today),
+              title: const Text('Mis Citas'),
+              onTap: () {
+                Navigator.pop(context); // Cierra el drawer
+                Navigator.pushReplacementNamed(context, '/cliente/mis-citas');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.shopping_bag),
+              title: const Text('Mis Compras'),
+              onTap: () {
+                Navigator.pop(context); // Cierra el drawer
+                Navigator.pushReplacementNamed(context, '/cliente/mis-compras');
+              },
+            ),
+          ],
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),

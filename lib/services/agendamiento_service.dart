@@ -20,8 +20,8 @@ class AgendamientoService {
       final headers = await _getHeaders();
       final url = '${ApiConfig.baseUrl}${ApiConfig.agendamientos}';
       
-      print('🔍 Intentando conectar a: $url');
-      print('📋 Headers: $headers');
+      print('🔍 [AgendamientoService] Intentando conectar a: $url');
+      print('📋 [AgendamientoService] Headers: $headers');
       
       final response = await http.get(
         Uri.parse(url),
@@ -29,19 +29,54 @@ class AgendamientoService {
       ).timeout(
         const Duration(seconds: 30),
         onTimeout: () {
+          print('⏰ [AgendamientoService] Tiempo de espera agotado');
           throw Exception('Tiempo de espera agotado. Verifique su conexión a internet.');
         },
       );
 
-      print('📥 Status Code: ${response.statusCode}');
-      print('📄 Response Body (primeros 200 chars): ${response.body.length > 200 ? response.body.substring(0, 200) : response.body}');
+      print('📥 [AgendamientoService] Status Code: ${response.statusCode}');
+      print('📄 [AgendamientoService] Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         if (response.body.isEmpty) {
+          print('ℹ️ [AgendamientoService] La respuesta está vacía');
           return [];
         }
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => Agendamiento.fromJson(json)).toList();
+        
+        try {
+          // Decodificar la respuesta JSON
+          final dynamic responseData = jsonDecode(response.body);
+          print('🔍 [AgendamientoService] Tipo de respuesta: ${responseData.runtimeType}');
+          
+          // Verificar si la respuesta es una lista o un objeto con una propiedad data
+          if (responseData is List) {
+            print('✅ [AgendamientoService] Respuesta es una lista de ${responseData.length} elementos');
+            if (responseData.isNotEmpty) {
+              print('📝 [AgendamientoService] Primer elemento: ${responseData[0]}');
+            }
+            return responseData.map<Agendamiento>((json) {
+              try {
+                return Agendamiento.fromJson(json);
+              } catch (e) {
+                print('❌ [AgendamientoService] Error al mapear cita: $e');
+                print('📝 JSON problemático: $json');
+                rethrow;
+              }
+            }).toList();
+          } else if (responseData is Map && responseData.containsKey('data')) {
+            print('ℹ️ [AgendamientoService] Respuesta contiene propiedad "data"');
+            final data = responseData['data'] as List;
+            print('✅ [AgendamientoService] ${data.length} citas encontradas en la propiedad data');
+            return data.map<Agendamiento>((json) => Agendamiento.fromJson(json)).toList();
+          } else {
+            print('❌ [AgendamientoService] Formato de respuesta inesperado');
+            print('📝 Respuesta completa: $responseData');
+            throw Exception('Formato de respuesta inesperado de la API');
+          }
+        } catch (e) {
+          print('❌ [AgendamientoService] Error al procesar la respuesta: $e');
+          rethrow;
+        }
       } else {
         throw Exception('Error HTTP ${response.statusCode}: ${response.body.length > 100 ? response.body.substring(0, 100) : response.body}');
       }
@@ -161,6 +196,85 @@ class AgendamientoService {
     } catch (e) {
       print('Error en eliminarAgendamiento: $e');
       throw Exception('Error al eliminar agendamiento: $e');
+    }
+  }
+
+  Future<List<Agendamiento>> obtenerAgendamientosPorCliente(String clienteId) async {
+    try {
+      final headers = await _getHeaders();
+      // Use query parameters instead of path parameters
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.agendamientos}')
+          .replace(queryParameters: {
+            'clienteId': clienteId,
+          });
+      
+      print('🔍 [AgendamientoService] Obteniendo citas para el cliente: $clienteId');
+      print('🔗 URL: $url');
+      
+      final response = await http.get(
+        url,
+        headers: headers,
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('Tiempo de espera agotado. Verifique su conexión a internet.');
+        },
+      );
+
+      print('📥 [AgendamientoService] Status Code: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          print('ℹ️ [AgendamientoService] El cliente no tiene citas agendadas');
+          return [];
+        }
+        
+        try {
+          final dynamic responseData = jsonDecode(response.body);
+          
+          if (responseData is List) {
+            print('✅ [AgendamientoService] Se encontraron ${responseData.length} citas para el cliente');
+            return responseData.map<Agendamiento>((json) => Agendamiento.fromJson(json)).toList();
+          } else if (responseData is Map && responseData.containsKey('data')) {
+            final data = responseData['data'] as List;
+            print('✅ [AgendamientoService] Se encontraron ${data.length} citas para el cliente en la propiedad data');
+            return data.map<Agendamiento>((json) => Agendamiento.fromJson(json)).toList();
+          } else {
+            // If we get here, the API returned a 200 but with an unexpected format
+            // Let's try to get all appointments and filter client-side as a fallback
+            print('⚠️ [AgendamientoService] Formato de respuesta inesperado, intentando filtrado local...');
+            final allAppointments = await obtenerAgendamientos();
+            final clientAppointments = allAppointments
+                .where((appointment) => appointment.clienteId.toString() == clienteId)
+                .toList();
+            print('✅ [AgendamientoService] Se encontraron ${clientAppointments.length} citas para el cliente (filtrado local)');
+            return clientAppointments;
+          }
+        } catch (e) {
+          print('❌ [AgendamientoService] Error al procesar la respuesta: $e');
+          rethrow;
+        }
+      } else {
+        // If we get a 404 or other error, try to get all appointments and filter client-side
+        print('⚠️ [AgendamientoService] Error ${response.statusCode} al obtener citas, intentando filtrado local...');
+        try {
+          final allAppointments = await obtenerAgendamientos();
+          final clientAppointments = allAppointments
+              .where((appointment) => appointment.clienteId.toString() == clienteId)
+              .toList();
+          print('✅ [AgendamientoService] Se encontraron ${clientAppointments.length} citas para el cliente (filtrado local)');
+          return clientAppointments;
+        } catch (e) {
+          print('❌ [AgendamientoService] Error en el filtrado local: $e');
+          throw Exception('No se pudieron cargar las citas. Por favor, intente nuevamente.');
+        }
+      }
+    } on FormatException catch (e) {
+      print('❌ Error de formato JSON: $e');
+      throw Exception('Error al procesar la respuesta de la API (formato JSON inválido): $e');
+    } catch (e) {
+      print('❌ Error al obtener citas del cliente: $e');
+      rethrow;
     }
   }
 }

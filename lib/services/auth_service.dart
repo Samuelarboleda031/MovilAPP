@@ -62,12 +62,19 @@ class AuthService {
   Future<void> signOut() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userKey);
+    
     try {
-      await _googleSignIn.disconnect();
-    } catch (_) {
-      // Ignorar error si no estaba conectado con Google
+      // Solo cerrar sesión de Google si el usuario inició sesión con Google
+      if (await _googleSignIn.isSignedIn() == true) {
+        await _googleSignIn.disconnect();
+        await _googleSignIn.signOut();
+      }
+    } catch (e) {
+      // Registrar el error pero continuar con el cierre de sesión de Firebase
+      print('Error durante el cierre de sesión de Google: $e');
     }
-    await _googleSignIn.signOut();
+    
+    // Siempre cerrar sesión de Firebase Auth
     await _auth.signOut();
   }
 

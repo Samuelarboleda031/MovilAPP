@@ -45,26 +45,60 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
   @override
   void initState() {
     super.initState();
-    _cargarDatos();
-    if (widget.agendamiento != null) {
-      _clienteSeleccionado = widget.agendamiento!.cliente;
-      _barberoSeleccionado = widget.agendamiento!.barbero;
-      _servicioSeleccionado = widget.agendamiento!.servicio;
-      _paqueteSeleccionado = widget.agendamiento!.paquete;
-      _esServicio = widget.agendamiento!.servicioId != null;
-      _fechaSeleccionada = DateTime.parse(widget.agendamiento!.fechaCita);
-      _horaInicio = TimeOfDay(
-        hour: int.parse(widget.agendamiento!.horaInicio.split(':')[0]),
-        minute: int.parse(widget.agendamiento!.horaInicio.split(':')[1]),
-      );
-      _horaFin = TimeOfDay(
-        hour: int.parse(widget.agendamiento!.horaFin.split(':')[0]),
-        minute: int.parse(widget.agendamiento!.horaFin.split(':')[1]),
-      );
-      _estadoCita = widget.agendamiento!.estadoCita;
-      _monto = widget.agendamiento!.monto;
-      _observaciones = widget.agendamiento!.observaciones;
-    }
+    _cargarDatos().then((_) {
+      if (widget.agendamiento != null && mounted) {
+        setState(() {
+          // Buscar y asignar el cliente de la lista cargada
+          _clienteSeleccionado = _clientes.firstWhere(
+            (cliente) => cliente.id == widget.agendamiento!.clienteId,
+            orElse: () => widget.agendamiento!.cliente!,
+          );
+          
+          // Buscar y asignar el barbero de la lista cargada
+          _barberoSeleccionado = _barberos.firstWhere(
+            (barbero) => barbero.id == widget.agendamiento!.barberoId,
+            orElse: () => widget.agendamiento!.barbero!,
+          );
+          
+          // Buscar y asignar el servicio de la lista cargada si existe
+          if (widget.agendamiento!.servicioId != null) {
+            _servicioSeleccionado = _servicios.firstWhere(
+              (servicio) => servicio.id == widget.agendamiento!.servicioId,
+              orElse: () => widget.agendamiento!.servicio!, // Ya tenía el !
+            );
+            _esServicio = true;
+          }
+          
+          // Buscar y asignar el paquete de la lista cargada si existe
+          if (widget.agendamiento!.paqueteId != null) {
+            _paqueteSeleccionado = _paquetes.firstWhere(
+              (paquete) => paquete.id == widget.agendamiento!.paqueteId,
+              orElse: () => widget.agendamiento!.paquete!, // Ya tenía el !
+            );
+            _esServicio = false;
+          }
+          
+          _fechaSeleccionada = DateTime.parse(widget.agendamiento!.fechaCita);
+          
+          // Configurar horas
+          final horaInicioParts = widget.agendamiento!.horaInicio.split(':');
+          _horaInicio = TimeOfDay(
+            hour: int.parse(horaInicioParts[0]),
+            minute: int.parse(horaInicioParts[1]),
+          );
+          
+          final horaFinParts = widget.agendamiento!.horaFin.split(':');
+          _horaFin = TimeOfDay(
+            hour: int.parse(horaFinParts[0]),
+            minute: int.parse(horaFinParts[1]),
+          );
+          
+          _estadoCita = widget.agendamiento!.estadoCita;
+          _monto = widget.agendamiento!.monto;
+          _observaciones = widget.agendamiento!.observaciones;
+        });
+      }
+    });
   }
 
   Future<void> _cargarDatos() async {
@@ -296,7 +330,7 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                     const SizedBox(height: 16),
                     // Cliente
                     DropdownButtonFormField<Cliente>(
-                      initialValue: _clienteSeleccionado,
+                      value: _clienteSeleccionado,
                       decoration: const InputDecoration(
                         labelText: 'Cliente *',
                         border: OutlineInputBorder(),
@@ -322,7 +356,7 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                     const SizedBox(height: 16),
                     // Barbero
                     DropdownButtonFormField<Barbero>(
-                      initialValue: _barberoSeleccionado,
+                      value: _barberoSeleccionado,
                       decoration: const InputDecoration(
                         labelText: 'Barbero *',
                         border: OutlineInputBorder(),
@@ -349,7 +383,7 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                     // Servicio o Paquete
                     if (_esServicio)
                       DropdownButtonFormField<Servicio>(
-                        initialValue: _servicioSeleccionado,
+                        value: _servicioSeleccionado,
                         decoration: const InputDecoration(
                           labelText: 'Servicio *',
                           border: OutlineInputBorder(),
@@ -365,6 +399,7 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                           setState(() {
                             _servicioSeleccionado = servicio;
                             _monto = servicio?.precio;
+                            _paqueteSeleccionado = null; // Limpiar selección de paquete
                           });
                         },
                         validator: (value) {
@@ -376,7 +411,7 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                       )
                     else
                       DropdownButtonFormField<Paquete>(
-                        initialValue: _paqueteSeleccionado,
+                        value: _paqueteSeleccionado,
                         decoration: const InputDecoration(
                           labelText: 'Paquete *',
                           border: OutlineInputBorder(),
@@ -392,6 +427,7 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                           setState(() {
                             _paqueteSeleccionado = paquete;
                             _monto = paquete?.precio;
+                            _servicioSeleccionado = null; // Limpiar selección de servicio
                           });
                         },
                         validator: (value) {
@@ -445,7 +481,7 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                     const SizedBox(height: 16),
                     // Estado
                     DropdownButtonFormField<String>(
-                      initialValue: _estadoCita,
+                      value: _estadoCita,
                       decoration: const InputDecoration(
                         labelText: 'Estado de Cita',
                         border: OutlineInputBorder(),
@@ -466,11 +502,19 @@ class _AgendamientoFormScreenState extends State<AgendamientoFormScreen> {
                     const SizedBox(height: 16),
                     // Monto
                     TextFormField(
-                      initialValue: _monto?.toStringAsFixed(2),
+                      controller: TextEditingController(
+                        text: _monto?.toStringAsFixed(2) ?? '',
+                      )..selection = TextSelection.collapsed(offset: _monto?.toStringAsFixed(2).length ?? 0),
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Monto',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: (_servicioSeleccionado != null || _paqueteSeleccionado != null)
+                            ? Tooltip(
+                                message: 'Precio automático. Puede modificarlo si es necesario.',
+                                child: Icon(Icons.info_outline, color: Colors.blue.shade700),
+                              )
+                            : null,
                       ),
                       onChanged: (value) {
                         _monto = double.tryParse(value);

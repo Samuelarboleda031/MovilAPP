@@ -6,7 +6,11 @@ import 'screens/register_screen.dart';
 import 'screens/ventas_screen.dart';
 import 'screens/agendamientos_screen.dart';
 import 'screens/client_home_screen.dart';
+import 'screens/mis_compras_screen.dart';
+import 'screens/client_agendamientos_screen.dart';
+import 'screens/client_agendamiento_form_screen.dart';
 import 'firebase_options.dart';
+import 'package:provider/provider.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,8 +93,12 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
         '/ventas': (context) => const VentasScreen(),
+        '/mis-compras': (context) => const MisComprasScreen(),
         '/agendamiento': (context) => const AgendamientosScreen(),
         '/client_home': (context) => const ClientHomeScreen(),
+        '/cliente/mis-citas': (context) => const ClientAgendamientosScreen(),
+        '/cliente/agendamiento': (context) => const ClientAgendamientoFormScreen(),
+        '/cliente/mis-compras': (context) => const MisComprasScreen(),
       },
     );
   }
